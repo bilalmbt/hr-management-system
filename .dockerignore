@@ -1,0 +1,12 @@
+.git
+.gitignore
+node_modules
+vendor
+.env
+.env.*
+!docker/app.env
+storage/logs/*
+bootstrap/cache/*
+docker-compose.override.yml
+*.md
+# Keep public/build — the committed compiled assets are what remove the npm step.

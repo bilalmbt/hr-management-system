@@ -1,5 +1,10 @@
 * text=auto eol=lf
 
+# Windows launchers must stay CRLF; the shell entrypoint must stay LF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+docker/entrypoint.sh text eol=lf
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html
