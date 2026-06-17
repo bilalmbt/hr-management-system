@@ -1,17 +1,24 @@
-# HR Tool — one-command local stack.
-#   db      : PostgreSQL (the only DB the app runs on unchanged)
-#   mailpit : catches all outgoing email so "Add Employee" etc. never error
-#   app     : the Laravel app, served on http://localhost:8000
+# HR Tool — full stack in ONE command, the same way locally and in production.
 #
-# Start everything with:   docker compose up --build
-# (or just double-click start.bat on Windows)
+#   docker compose up -d --build
+#
+#   db      : PostgreSQL (the only DB the app runs on unchanged)
+#   mailpit : catches outgoing mail so the app never errors when it "sends"
+#   app     : the Laravel app (PHP 8.2), serves the whole site
+#
+# Local:        open  http://localhost:8000
+# DigitalOcean: open  http://<your-droplet-ip>:8000   (or set APP_PORT=80 -> http://<ip>)
+#
+# Optional overrides live in a host .env file (see deploy.env.example):
+#   APP_PORT, APP_URL, MAIL_MAILER, DB_PASSWORD
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: employees_management
       POSTGRES_USER: hr
-      POSTGRES_PASSWORD: hr
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hr}
     volumes:
       - hrtool_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -19,27 +26,37 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    # No host port published, so an existing local Postgres on 5432 can't clash.
+    # No host port published — reached only over the internal Docker network,
+    # so it can never clash with (or expose) anything on the host.
 
   mailpit:
     image: axllent/mailpit:latest
+    restart: unless-stopped
     ports:
-      - "8025:8025"   # open http://localhost:8025 to read "sent" emails
-    # SMTP (1025) is reached internally by the app over the Docker network.
+      - "127.0.0.1:8025:8025"   # inbox UI bound to loopback ONLY: reachable via
+                                # localhost on your laptop, NOT public on a server.
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
       - docker/app.env
+    environment:
+      # Safe production defaults. Override APP_URL/MAIL_MAILER via a host .env.
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL:-http://localhost:8000}
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      DB_PASSWORD: ${DB_PASSWORD:-hr}
     depends_on:
       db:
         condition: service_healthy
       mailpit:
         condition: service_started
     ports:
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
 
 volumes:
   hrtool_pgdata:

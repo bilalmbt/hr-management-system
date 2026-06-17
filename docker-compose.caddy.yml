@@ -1,0 +1,38 @@
+# OPTIONAL: automatic HTTPS with a real domain, via Caddy (free Let's Encrypt).
+# Requires a domain whose DNS A-record points at this server's IP.
+#
+# In your host .env set:
+#   DOMAIN=hr.example.com
+#   APP_URL=https://hr.example.com
+#
+# Then start everything (note the two -f flags):
+#   docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d --build
+#
+# Caddy fronts the app on 80/443 and obtains/renews TLS certificates automatically.
+services:
+  app:
+    ports: []   # stop publishing 8000 publicly — Caddy is the only entrypoint now
+    environment:
+      # Force asset URLs to https so nothing is blocked as mixed-content,
+      # without having to trust proxy headers (the app uses IP-based attendance,
+      # so we intentionally do NOT blanket-trust X-Forwarded-For).
+      ASSET_URL: ${APP_URL:?set APP_URL=https://your-domain in .env}
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN=your-domain in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,6 @@
+# Used only by the optional docker-compose.caddy.yml (automatic HTTPS).
+# {$DOMAIN} is supplied by the caddy service's environment.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:8000
+}

@@ -4,6 +4,10 @@ This app normally needs PostgreSQL, PHP 8.2, Composer, and a multi-step setup.
 To avoid all of that, this folder ships a **one-command** setup using Docker.
 A non-technical person only needs to install **one** program and **double-click one file**.
 
+> Deploying to a server instead of a personal computer? See
+> [DEPLOY-DIGITALOCEAN.md](DEPLOY-DIGITALOCEAN.md) — the same stack with one
+> `docker compose up` on a DigitalOcean Droplet.
+
 ---
 
 ## What you need (one-time)
