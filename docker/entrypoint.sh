@@ -32,6 +32,10 @@ fi
 
 # Generate APP_KEY only if one isn't already set (fixes the
 # "No application encryption key has been specified" error).
+# key:generate REPLACES an existing APP_KEY= line, so make sure one exists first.
+# (It is intentionally absent from docker/app.env so the env_file can't shadow
+#  the real key with an empty value.)
+grep -q '^APP_KEY=' .env || printf '\nAPP_KEY=\n' >> .env
 if ! grep -q '^APP_KEY=base64:' .env; then
     echo "==> Generating application key..."
     php artisan key:generate --force
@@ -50,7 +54,7 @@ SEEDED="$(php -r '
 ')"
 if [ "${SEEDED:-0}" = "0" ]; then
     echo "==> Seeding starter data (first boot)..."
-    php artisan db:seed --seeder=StarterSeeder --force
+    php artisan db:seed --class=StarterSeeder --force
 else
     echo "==> Data already present — skipping seed."
 fi
